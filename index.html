@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Local Service Connector — Find Trusted Local Services Near You</title>
+    <meta
+      name="description"
+      content="Discover and connect with trusted local service providers — plumbers, electricians, technicians, tutors, creatives and more."
+    />
+    <meta name="theme-color" content="#0B1220" />
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif']
+            },
+            colors: {
+              brand: {
+                50: '#EFF5FF',
+                100: '#DBE7FE',
+                200: '#BFD3FE',
+                300: '#93B4FD',
+                400: '#608FFA',
+                500: '#3B6FF5',
+                600: '#2563EB',
+                700: '#1D4ED8',
+                800: '#1E40AF',
+                900: '#1E3A8A'
+              },
+              navy: {
+                700: '#1E2A42',
+                800: '#111A2C',
+                900: '#0B1220'
+              }
+            }
+          }
+        }
+      };
+    </script>
+    <link rel="stylesheet" href="css/input.css" />
+  </head>
+
+  <body data-page="home">
+    <a href="#main" class="lsc-skip">Skip to main content</a>
+
+    <div id="site-header"></div>
+
+    <main id="page">
+      <!-- ================= HERO ================= -->
+      <section class="hero">
+        <div class="lsc-container">
+          <div class="mx-auto max-w-3xl text-center">
+            <span class="hero-chip">
+              <i data-lucide="shield-check"></i>
+              Verified reviews &amp; local professionals
+            </span>
+
+            <h1
+              class="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
+            >
+              Find Trusted Local Services
+              <span class="text-brand-400">Near You</span>
+            </h1>
+
+            <p class="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
+              Connect with reliable local professionals for the services you need — quickly,
+              easily, and confidently.
+            </p>
+          </div>
+
+          <!-- Hero search -->
+          <form id="hero-search" class="hero-search mx-auto mt-9 max-w-4xl" role="search">
+            <div class="grid gap-3 md:grid-cols-12">
+              <div class="relative md:col-span-5">
+                <label class="sr-only" for="hero-query">What service do you need?</label>
+                <i
+                  data-lucide="search"
+                  class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                ></i>
+                <input
+                  id="hero-query"
+                  class="lsc-input pl-10"
+                  type="search"
+                  placeholder="What service do you need?"
+                  list="service-options"
+                  autocomplete="off"
+                />
+                <datalist id="service-options">
+                  <option value="Plumbing"></option>
+                  <option value="Electrical"></option>
+                  <option value="Computer Repair"></option>
+                  <option value="Phone Repair"></option>
+                  <option value="Cleaning"></option>
+                  <option value="Tutoring"></option>
+                  <option value="Mechanics"></option>
+                  <option value="Graphic Design"></option>
+                  <option value="Barbers"></option>
+                  <option value="Tailoring"></option>
+                  <option value="Photography"></option>
+                </datalist>
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="sr-only" for="hero-category">Service category</label>
+                <select id="hero-category" class="lsc-input">
+                  <option value="">All categories</option>
+                </select>
+              </div>
+
+              <div class="relative md:col-span-2">
+                <label class="sr-only" for="hero-location">Location</label>
+                <i
+                  data-lucide="map-pin"
+                  class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                ></i>
+                <input
+                  id="hero-location"
+                  class="lsc-input pl-10"
+                  type="text"
+                  placeholder="Location"
+                  list="location-options"
+                  autocomplete="off"
+                />
+                <datalist id="location-options">
+                  <option value="Addis Ababa"></option>
+                  <option value="Dire Dawa"></option>
+                  <option value="Bahir Dar"></option>
+                  <option value="Hawassa"></option>
+                  <option value="Mekelle"></option>
+                  <option value="Adama"></option>
+                  <option value="Gondar"></option>
+                  <option value="Jimma"></option>
+                </datalist>
+              </div>
+
+              <div class="md:col-span-2">
+                <button type="submit" class="lsc-btn lsc-btn--primary lsc-btn--lg w-full">
+                  <i data-lucide="search" class="h-4 w-4"></i>
+                  Search
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <span class="hero-chip"><i data-lucide="users"></i>500+ providers</span>
+            <span class="hero-chip"><i data-lucide="star"></i>4.8 average rating</span>
+            <span class="hero-chip"><i data-lucide="circle-check"></i>Free to browse</span>
+            <span class="hero-chip"><i data-lucide="zap"></i>Instant requests</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= POPULAR SERVICES ================= -->
+      <section class="lsc-section bg-white" id="popular-services-section">
+        <div class="lsc-container">
+          <div class="lsc-section-head">
+            <span class="lsc-eyebrow">Popular services</span>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              What are you looking for today?
+            </h2>
+            <p class="mt-3 text-base text-slate-600">
+              Browse the categories customers request most often on Local Service Connector.
+            </p>
+          </div>
+
+          <div
+            id="popular-services"
+            class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
+          ></div>
+
+          <div class="mt-10 text-center">
+            <a href="services.html" class="lsc-btn lsc-btn--secondary lsc-btn--lg">
+              Browse all services
+              <i data-lucide="arrow-right" class="h-4 w-4"></i>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= FEATURED PROVIDERS ================= -->
+      <section class="lsc-section bg-slate-50" id="featured-section">
+        <div class="lsc-container">
+          <div class="lsc-section-head">
+            <span class="lsc-eyebrow">Top rated professionals</span>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              Professionals customers rate highest
+            </h2>
+            <p class="mt-3 text-base text-slate-600">
+              Sample listings from our demo catalogue, ranked by rating and review volume.
+            </p>
+          </div>
+
+          <div
+            id="featured-providers"
+            class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          ></div>
+
+          <div class="mt-10 text-center">
+            <a href="services.html" class="lsc-btn lsc-btn--primary lsc-btn--lg">
+              View all providers
+              <i data-lucide="arrow-right" class="h-4 w-4"></i>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= HOW IT WORKS ================= -->
+      <section class="lsc-section bg-white" id="how-it-works">
+        <div class="lsc-container">
+          <div class="lsc-section-head">
+            <span class="lsc-eyebrow">How it works</span>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              Three steps to get the job done
+            </h2>
+            <p class="mt-3 text-base text-slate-600">
+              No phone book, no guesswork. Search, compare, and connect in minutes.
+            </p>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-3">
+            <article class="lsc-step">
+              <div class="flex items-center justify-between">
+                <span
+                  class="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600"
+                >
+                  <i data-lucide="search" class="h-5 w-5"></i>
+                </span>
+                <span class="lsc-step__num">01 — SEARCH</span>
+              </div>
+              <h3 class="mt-5 text-lg font-semibold text-slate-900">
+                Find the service you need.
+              </h3>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">
+                Search by category, keyword, or location to see professionals who are ready to
+                help nearby.
+              </p>
+            </article>
+
+            <article class="lsc-step">
+              <div class="flex items-center justify-between">
+                <span
+                  class="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600"
+                >
+                  <i data-lucide="arrow-left-right" class="h-5 w-5"></i>
+                </span>
+                <span class="lsc-step__num">02 — COMPARE</span>
+              </div>
+              <h3 class="mt-5 text-lg font-semibold text-slate-900">
+                Compare trusted local professionals.
+              </h3>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">
+                Review ratings, price ranges, availability, and working hours side by side
+                before you decide.
+              </p>
+            </article>
+
+            <article class="lsc-step">
+              <div class="flex items-center justify-between">
+                <span
+                  class="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-600"
+                >
+                  <i data-lucide="phone-call" class="h-5 w-5"></i>
+                </span>
+                <span class="lsc-step__num">03 — CONNECT</span>
+              </div>
+              <h3 class="mt-5 text-lg font-semibold text-slate-900">
+                Contact the provider and request a service.
+              </h3>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600">
+                Send a service request with your preferred date and time, then track it from
+                your dashboard.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= STATISTICS ================= -->
+      <section class="bg-navy-900 py-16 lg:py-20" id="stats-section">
+        <div class="lsc-container">
+          <div class="mx-auto max-w-2xl text-center">
+            <span class="lsc-eyebrow text-brand-400">Platform statistics</span>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              A growing local services network
+            </h2>
+            <p class="mt-3 text-sm text-slate-400">
+              Demo figures shown for this frontend prototype — they are not live platform data.
+            </p>
+          </div>
+
+          <div
+            id="platform-stats"
+            class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          ></div>
+        </div>
+      </section>
+
+      <!-- ================= CTA ================= -->
+      <section class="bg-white py-16 lg:py-20">
+        <div class="lsc-container">
+          <div
+            class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 px-6 py-14 text-center shadow-2xl sm:px-12"
+          >
+            <h2 class="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Need a hand with something today?
+            </h2>
+            <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-brand-100 sm:text-base">
+              Create a free account to save providers, send service requests, and keep track of
+              every job in one place.
+            </p>
+            <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a href="services.html" class="lsc-btn lsc-btn--lg w-full bg-white text-brand-700 hover:bg-brand-50 sm:w-auto">
+                Browse services
+              </a>
+              <button
+                type="button"
+                class="lsc-btn lsc-btn--lg w-full border border-white/40 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
+                data-auth="signup"
+              >
+                Create free account
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="site-footer"></div>
+    <div id="modal-root"></div>
+    <div id="toast-root" aria-live="polite" aria-atomic="false"></div>
+
+    <script src="https://unpkg.com/lucide@1.52.0/dist/umd/lucide.min.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

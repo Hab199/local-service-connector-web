@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — Local Service Connector</title>
+    <meta
+      name="description"
+      content="Track your service requests, saved providers, and reviews in the Local Service Connector demo dashboard."
+    />
+    <meta name="theme-color" content="#0B1220" />
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif']
+            },
+            colors: {
+              brand: {
+                50: '#EFF5FF',
+                100: '#DBE7FE',
+                200: '#BFD3FE',
+                300: '#93B4FD',
+                400: '#608FFA',
+                500: '#3B6FF5',
+                600: '#2563EB',
+                700: '#1D4ED8',
+                800: '#1E40AF',
+                900: '#1E3A8A'
+              },
+              navy: { 700: '#1E2A42', 800: '#111A2C', 900: '#0B1220' }
+            }
+          }
+        }
+      };
+    </script>
+    <link rel="stylesheet" href="css/input.css" />
+  </head>
+
+  <body data-page="dashboard">
+    <a href="#main" class="lsc-skip">Skip to main content</a>
+
+    <div id="site-header"></div>
+
+    <main id="page">
+      <!-- ================= HEADER ================= -->
+      <section class="lsc-page-header">
+        <div class="lsc-container">
+          <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <span class="lsc-eyebrow text-brand-400">Customer dashboard</span>
+              <h1 id="dash-welcome" class="mt-3 text-3xl font-bold tracking-tight text-white">
+                Welcome back!
+              </h1>
+              <p class="mt-2 text-sm text-slate-300">
+                Track requests, saved professionals, and reviews — all stored in your browser.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+              <a href="services.html" class="lsc-btn lsc-btn--primary">
+                <i data-lucide="search" class="h-4 w-4"></i>
+                Find a service
+              </a>
+              <a
+                href="provider-dashboard.html"
+                class="lsc-btn border border-white/25 bg-white/10 text-white hover:bg-white/20"
+              >
+                <i data-lucide="briefcase" class="h-4 w-4"></i>
+                Provider view
+              </a>
+            </div>
+          </div>
+
+          <div
+            class="mt-6 flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs leading-relaxed text-slate-300 sm:text-sm"
+          >
+            <i data-lucide="info" class="mt-0.5 h-4 w-4 shrink-0 text-brand-400"></i>
+            <p>
+              <strong class="text-white">Demo dashboard.</strong> Requests, saves, and reviews are
+              sample records kept in localStorage — nothing is sent to a server. Try cancelling a
+              request or saving a new provider to see it update live.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TABS ================= -->
+      <div class="border-b border-slate-200 bg-white">
+        <div class="lsc-container">
+          <nav class="lsc-chip-row py-3" aria-label="Dashboard sections">
+            <a href="dashboard.html" class="lsc-chip is-active" aria-current="page">
+              <i data-lucide="layout-dashboard" class="h-4 w-4"></i>Customer dashboard
+            </a>
+            <a href="provider-dashboard.html" class="lsc-chip">
+              <i data-lucide="briefcase" class="h-4 w-4"></i>Provider dashboard
+            </a>
+            <a href="services.html" class="lsc-chip">
+              <i data-lucide="search" class="h-4 w-4"></i>Browse services
+            </a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- ================= CONTENT ================= -->
+      <section class="lsc-section !py-8 lg:!py-10">
+        <div class="lsc-container space-y-6">
+          <!-- Stats -->
+          <div id="dash-stats" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+
+          <div class="grid gap-6 lg:grid-cols-3">
+            <!-- Main column -->
+            <div class="space-y-6 lg:col-span-2">
+              <section class="lsc-panel">
+                <div class="lsc-panel__head">
+                  <h2 class="lsc-panel__title flex items-center gap-2">
+                    <i data-lucide="clipboard-list" class="h-4 w-4 text-brand-600"></i>
+                    Recent requests
+                  </h2>
+                  <span id="requests-count" class="text-xs text-slate-500"></span>
+                </div>
+                <div id="recent-requests"></div>
+              </section>
+
+              <section class="lsc-panel">
+                <div class="lsc-panel__head">
+                  <h2 class="lsc-panel__title flex items-center gap-2">
+                    <i data-lucide="calendar-clock" class="h-4 w-4 text-brand-600"></i>
+                    Upcoming requests
+                  </h2>
+                </div>
+                <div id="upcoming-requests"></div>
+              </section>
+            </div>
+
+            <!-- Side column -->
+            <div class="space-y-6">
+              <section class="lsc-panel">
+                <div class="lsc-panel__head">
+                  <h2 class="lsc-panel__title flex items-center gap-2">
+                    <i data-lucide="heart" class="h-4 w-4 text-brand-600"></i>
+                    Saved providers
+                  </h2>
+                  <span id="saved-count" class="text-xs text-slate-500"></span>
+                </div>
+                <div id="saved-providers"></div>
+              </section>
+
+              <section class="lsc-panel">
+                <div class="lsc-panel__head">
+                  <h2 class="lsc-panel__title flex items-center gap-2">
+                    <i data-lucide="star" class="h-4 w-4 text-brand-600"></i>
+                    Recent reviews
+                  </h2>
+                </div>
+                <div id="recent-reviews"></div>
+              </section>
+
+              <div class="lsc-demo-note">
+                <i data-lucide="rotate-ccw"></i>
+                <span>
+                  Want a clean slate?
+                  <button type="button" class="font-semibold underline" data-action="reset-demo">
+                    Reset demo data
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="site-footer"></div>
+    <div id="modal-root"></div>
+    <div id="toast-root" aria-live="polite"></div>
+
+    <script src="https://unpkg.com/lucide@1.52.0/dist/umd/lucide.min.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+  </body>
+</html>
