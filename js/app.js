@@ -61,6 +61,58 @@
     return now.getFullYear() + "-" + month + "-" + day;
   };
 
+  LSC.generateRequestId = function () {
+    try {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return "REQ-" + window.crypto.randomUUID().replace(/-/g, "").toUpperCase().slice(0, 16);
+      }
+    } catch (error) {
+      /* ignore */
+    }
+    return "REQ-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  };
+
+  const REQUEST_STATUSES = ["Pending", "Accepted", "In Progress", "Completed", "Cancelled"];
+
+  LSC.REQUEST_STATUSES = REQUEST_STATUSES;
+
+  LSC.normalizeStatus = function (status) {
+    if (!status) return "Pending";
+    const s = String(status).trim();
+    if (s === "Confirmed") return "Pending"; // migrate old demo values
+    if (s === "Rejected") return "Cancelled"; // map old to new
+    if (REQUEST_STATUSES.indexOf(s) !== -1) return s;
+    return "Pending";
+  };
+
+  LSC.isValidStatusTransition = function (from, to) {
+    const current = LSC.normalizeStatus(from);
+    const next = LSC.normalizeStatus(to);
+    if (current === next) return true;
+    if (current === "Cancelled" || current === "Completed") return false;
+    if (current === "Pending" && (next === "Accepted" || next === "Cancelled")) return true;
+    if (current === "Accepted" && (next === "In Progress" || next === "Cancelled")) return true;
+    if (current === "In Progress" && (next === "Completed" || next === "Cancelled")) return true;
+    return false;
+  };
+
+  LSC.canCustomerCancel = function (status) {
+    const s = LSC.normalizeStatus(status);
+    return s === "Pending";
+  };
+
+  LSC.canProviderAccept = function (status) {
+    return LSC.normalizeStatus(status) === "Pending";
+  };
+
+  LSC.canProviderMoveToInProgress = function (status) {
+    return LSC.normalizeStatus(status) === "Accepted";
+  };
+
+  LSC.canProviderMoveToCompleted = function (status) {
+    return LSC.normalizeStatus(status) === "In Progress";
+  };
+
   /* ----------------------------------------------------------
      2. Local storage wrapper
      ---------------------------------------------------------- */
@@ -122,6 +174,31 @@
 
   LSC.KEYS = KEYS;
   LSC.store = store;
+
+  LSC.normalizeRequest = function (request) {
+    if (!request || typeof request !== "object") return null;
+    const normalized = Object.assign({}, request);
+    normalized.id = normalized.id || LSC.generateRequestId();
+    normalized.status = LSC.normalizeStatus(normalized.status);
+    if (!normalized.createdAt) normalized.createdAt = new Date().toISOString();
+    if (!normalized.updatedAt) normalized.updatedAt = normalized.createdAt;
+    if (normalized.providerId !== undefined && normalized.providerId !== null) {
+      normalized.providerId = Number(normalized.providerId);
+    }
+    if (normalized.customerId !== undefined && normalized.customerId !== null) {
+      normalized.customerId = Number(normalized.customerId);
+    }
+    if (normalized.serviceId !== undefined && normalized.serviceId !== null) {
+      normalized.serviceId = Number(normalized.serviceId);
+    }
+    return normalized;
+  };
+
+  LSC.getAllRequests = function () {
+    const list = store.get(KEYS.requests, []);
+    if (!Array.isArray(list)) return [];
+    return list.map((r) => LSC.normalizeRequest(r)).filter(Boolean);
+  };
 
   /* ----------------------------------------------------------
      3. Toast notifications
@@ -839,8 +916,13 @@
 
   LSC.setButtonLoading = function (button, label) {
     if (!button) return;
+    if (button.dataset.loading === "true" || button.dataset.lscLoading === "1") return;
     button.dataset.originalHtml = button.innerHTML;
+    button.dataset.loading = "true";
+    button.dataset.lscLoading = "1";
     button.disabled = true;
+    button.setAttribute("aria-disabled", "true");
+    button.classList.add("is-loading");
     button.innerHTML =
       '<span class="lsc-spinner" aria-hidden="true"></span>' + LSC.escapeHtml(label || "Please wait");
   };
@@ -848,7 +930,12 @@
   LSC.clearButtonLoading = function (button) {
     if (!button) return;
     button.disabled = false;
+    button.removeAttribute("aria-disabled");
+    button.classList.remove("is-loading");
     if (button.dataset.originalHtml) button.innerHTML = button.dataset.originalHtml;
+    button.dataset.loading = "false";
+    button.dataset.lscLoading = "0";
+    delete button.dataset.lscLoading;
     LSC.refreshIcons(button);
   };
 

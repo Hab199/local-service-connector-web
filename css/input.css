@@ -658,6 +658,17 @@ textarea:focus-visible {
   border-color: #cbd5e1;
 }
 
+.lsc-input--sm {
+  min-height: 34px;
+  font-size: 0.75rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.625rem;
+}
+
+select.lsc-input--sm {
+  padding-right: 2rem;
+}
+
 .lsc-input:focus {
   border-color: #608ffa;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
@@ -1186,6 +1197,10 @@ select.lsc-input {
   border-color: transparent;
   background-color: #fff;
   min-height: 48px;
+}
+
+.hero-search .lsc-input.has-leading-icon {
+  padding-left: 2.5rem;
 }
 
 .hero-chip {

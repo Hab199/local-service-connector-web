@@ -16,38 +16,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif']
-            },
-            colors: {
-              brand: {
-                50: '#EFF5FF',
-                100: '#DBE7FE',
-                200: '#BFD3FE',
-                300: '#93B4FD',
-                400: '#608FFA',
-                500: '#3B6FF5',
-                600: '#2563EB',
-                700: '#1D4ED8',
-                800: '#1E40AF',
-                900: '#1E3A8A'
-              },
-              navy: {
-                700: '#1E2A42',
-                800: '#111A2C',
-                900: '#0B1220'
-              }
-            }
-          }
-        }
-      };
-    </script>
-    <link rel="stylesheet" href="css/input.css" />
+
+    <link rel="stylesheet" href="css/output.css" />
   </head>
 
   <body data-page="home">
@@ -89,7 +59,7 @@
                 ></i>
                 <input
                   id="hero-query"
-                  class="lsc-input pl-10"
+                  class="lsc-input has-leading-icon pl-10"
                   type="search"
                   placeholder="What service do you need?"
                   list="service-options"
@@ -125,7 +95,7 @@
                 ></i>
                 <input
                   id="hero-location"
-                  class="lsc-input pl-10"
+                  class="lsc-input has-leading-icon pl-10"
                   type="text"
                   placeholder="Location"
                   list="location-options"

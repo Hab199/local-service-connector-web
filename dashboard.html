@@ -16,34 +16,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif']
-            },
-            colors: {
-              brand: {
-                50: '#EFF5FF',
-                100: '#DBE7FE',
-                200: '#BFD3FE',
-                300: '#93B4FD',
-                400: '#608FFA',
-                500: '#3B6FF5',
-                600: '#2563EB',
-                700: '#1D4ED8',
-                800: '#1E40AF',
-                900: '#1E3A8A'
-              },
-              navy: { 700: '#1E2A42', 800: '#111A2C', 900: '#0B1220' }
-            }
-          }
-        }
-      };
-    </script>
-    <link rel="stylesheet" href="css/input.css" />
+
+    <link rel="stylesheet" href="css/output.css" />
   </head>
 
   <body data-page="dashboard">
@@ -121,12 +95,40 @@
             <!-- Main column -->
             <div class="space-y-6 lg:col-span-2">
               <section class="lsc-panel">
+                <div class="lsc-panel__head flex-wrap">
+                  <div>
+                    <h2 class="lsc-panel__title flex items-center gap-2">
+                      <i data-lucide="clipboard-list" class="h-4 w-4 text-brand-600"></i>
+                      My service requests
+                    </h2>
+                    <p class="mt-1 text-xs text-slate-500">Track status, view details, and manage your requests</p>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span id="requests-count" class="text-xs text-slate-500"></span>
+                    <label class="flex items-center gap-2 text-xs text-slate-600">
+                      <span class="sr-only">Filter requests by status</span>
+                      <select id="customer-request-filter" class="lsc-input lsc-input--sm">
+                        <option value="All">All statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <div id="customer-requests-list"></div>
+                <div id="customer-requests-empty" class="hidden"></div>
+              </section>
+
+              <section class="lsc-panel">
                 <div class="lsc-panel__head">
                   <h2 class="lsc-panel__title flex items-center gap-2">
-                    <i data-lucide="clipboard-list" class="h-4 w-4 text-brand-600"></i>
-                    Recent requests
+                    <i data-lucide="activity" class="h-4 w-4 text-brand-600"></i>
+                    Recent activity
                   </h2>
-                  <span id="requests-count" class="text-xs text-slate-500"></span>
+                  <span class="text-xs text-slate-500"></span>
                 </div>
                 <div id="recent-requests"></div>
               </section>

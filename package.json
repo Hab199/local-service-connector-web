@@ -1,0 +1,23 @@
+{
+  "name": "local-service-connector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hab199/LSCW.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Hab199/LSCW/issues"
+  },
+  "homepage": "https://github.com/Hab199/LSCW#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

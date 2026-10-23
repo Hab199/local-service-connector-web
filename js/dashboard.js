@@ -12,7 +12,7 @@
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 
-  const ACTIVE_STATUSES = ["Pending", "Confirmed", "Accepted"];
+  const ACTIVE_STATUSES = ["Pending", "Accepted", "In Progress"];
   const DEMO_PROVIDER_ID = 1;
 
   let providerStatusFilter = "All";
@@ -44,19 +44,19 @@
   }
 
   function statusBadge(status) {
+    const s = LSC.normalizeStatus ? LSC.normalizeStatus(status) : status;
     const styles = {
       Pending: "lsc-badge--amber",
-      Confirmed: "lsc-badge--brand",
       Accepted: "lsc-badge--brand",
+      "In Progress": "lsc-badge--brand",
       Completed: "lsc-badge--green",
-      Rejected: "lsc-badge--red",
       Cancelled: "lsc-badge--slate"
     };
     return (
       '<span class="lsc-badge ' +
-      (styles[status] || "lsc-badge--slate") +
+      (styles[s] || "lsc-badge--slate") +
       '"><span class="lsc-dot"></span>' +
-      LSC.escapeHtml(status) +
+      LSC.escapeHtml(s) +
       "</span>"
     );
   }
@@ -128,8 +128,9 @@
         description: "Laptop boots slowly after the last update and needs a clean install.",
         phone: "+251 911 000 001",
         customer: "Demo Customer",
-        status: "Confirmed",
+        status: "Accepted",
         createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
         demo: true
       },
       {
@@ -181,6 +182,7 @@
         time: "09:00 AM",
         amount: 450,
         status: "Pending",
+        providerId: 1,
         createdAt: new Date(Date.now() - 3600000 * 5).toISOString()
       },
       {
@@ -191,6 +193,7 @@
         time: "03:00 PM",
         amount: 1200,
         status: "Accepted",
+        providerId: 1,
         createdAt: new Date(Date.now() - 3600000 * 26).toISOString()
       },
       {
@@ -200,8 +203,10 @@
         date: isoOffset(3),
         time: "10:00 AM",
         amount: 400,
-        status: "Confirmed",
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+        status: "Accepted",
+        providerId: 1,
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000 * 2).toISOString()
       },
       {
         id: "REQ-DEMO-6",
@@ -230,7 +235,8 @@
         date: isoOffset(-8),
         time: "10:00 AM",
         amount: 600,
-        status: "Rejected",
+        status: "Cancelled",
+        providerId: 1,
         createdAt: new Date(Date.now() - 86400000 * 10).toISOString()
       }
     ];
@@ -274,38 +280,105 @@
 
   function getList(key) {
     const value = LSC.store.get(key, []);
-    return Array.isArray(value) ? value : [];
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const normalized = Object.assign({}, item);
+        if (LSC.normalizeStatus) normalized.status = LSC.normalizeStatus(normalized.status);
+        if (normalized.providerId !== undefined && normalized.providerId !== null) normalized.providerId = Number(normalized.providerId);
+        if (!normalized.id) normalized.id = LSC.generateRequestId ? LSC.generateRequestId() : "REQ-" + Math.random().toString(36).substr(2, 9);
+        return normalized;
+      })
+      .filter(Boolean);
   }
 
   /* ----------------------------------------------------------
      3. Customer dashboard
      ---------------------------------------------------------- */
 
+  function progressTimelineHtml(status) {
+    const s = LSC.normalizeStatus ? LSC.normalizeStatus(status) : status;
+    const steps = ["Pending", "Accepted", "In Progress", "Completed"];
+    if (s === "Cancelled") {
+      return (
+        '<div class="mt-2 flex items-center gap-2 text-xs text-slate-500">' +
+        '<span class="lsc-badge lsc-badge--slate"><span class="lsc-dot"></span>Cancelled</span>' +
+        '<span>Request was cancelled</span>' +
+        "</div>"
+      );
+    }
+    return (
+      '<div class="mt-3 flex items-center gap-1.5" aria-label="Request progress">' +
+      steps
+        .map((step, idx) => {
+          const currentIndex = steps.indexOf(s);
+          const active = idx <= currentIndex;
+          const isCurrent = idx === currentIndex;
+          return (
+            '<div class="flex flex-1 items-center gap-1.5">' +
+            '<div class="h-1.5 flex-1 rounded-full ' +
+            (active ? "bg-brand-500" : "bg-slate-200") +
+            (isCurrent ? " ring-2 ring-brand-200" : "") +
+            '"></div>' +
+            (idx < steps.length - 1
+              ? '<span class="text-[10px] text-slate-400">' +
+                (active ? "›" : "•") +
+                "</span>"
+              : "") +
+            "</div>"
+          );
+        })
+        .join("") +
+      "</div>" +
+      '<div class="mt-1 flex justify-between text-[10px] text-slate-500">' +
+      steps
+        .map((step, idx) => {
+          const currentIndex = steps.indexOf(s);
+          const active = idx <= currentIndex;
+          return (
+            '<span class="' + (active ? "font-medium text-brand-700" : "") + '">' +
+            step +
+            "</span>"
+          );
+        })
+        .join("") +
+      "</div>"
+    );
+  }
+
   function requestRowHtml(request, options) {
     const opts = options || {};
-    const cancellable = ACTIVE_STATUSES.indexOf(request.status) !== -1;
-    const provider = LSC.getProvider(request.providerId);
+    const status = LSC.normalizeStatus ? LSC.normalizeStatus(request.status) : request.status;
+    const cancellable = LSC.canCustomerCancel ? LSC.canCustomerCancel(status) : status === "Pending";
+    const provider = LSC.getProvider ? LSC.getProvider(request.providerId) : null;
 
     return (
       '<div class="lsc-row">' +
-      initialsAvatar(request.providerName) +
+      initialsAvatar(request.providerName || (provider ? provider.name : "Provider")) +
       '<div class="min-w-0 flex-1">' +
       '<p class="truncate text-sm font-semibold text-slate-900">' +
-      LSC.escapeHtml(request.service) +
+      LSC.escapeHtml(request.service || "Service request") +
       "</p>" +
       '<p class="mt-0.5 truncate text-xs text-slate-500">' +
-      LSC.escapeHtml(request.providerName) +
-      " · " +
-      formatDate(request.date) +
-      " · " +
-      LSC.escapeHtml(request.time || "Time flexible") +
-      "</p></div>" +
+      LSC.escapeHtml(request.providerName || (provider ? provider.name : "Provider")) +
+      (request.date ? " · " + formatDate(request.date) : "") +
+      (request.time ? " · " + LSC.escapeHtml(request.time) : "") +
+      (request.id ? " · " + LSC.escapeHtml(request.id) : "") +
+      "</p>" +
+      (opts.showTimeline ? progressTimelineHtml(status) : "") +
+      "</div>" +
       '<div class="flex items-center gap-2">' +
-      statusBadge(request.status) +
+      statusBadge(status) +
       (opts.showProfile && provider
         ? '<a href="provider.html?id=' +
           provider.id +
           '" class="lsc-btn lsc-btn--ghost lsc-btn--sm">Profile</a>'
+        : "") +
+      (opts.showDetails
+        ? '<button type="button" class="lsc-btn lsc-btn--soft lsc-btn--sm" data-action="view-request-details" data-id="' +
+          LSC.escapeHtml(request.id) +
+          '">Details</button>'
         : "") +
       (cancellable
         ? '<button type="button" class="lsc-btn lsc-btn--danger lsc-btn--sm" data-action="cancel-request" data-id="' +
@@ -326,14 +399,17 @@
       welcome.textContent = "Welcome back" + (user ? ", " + String(user.name).split(" ")[0] : "") + "!";
     }
 
-    const requests = getList(LSC.KEYS.requests);
+    let requests = getList(LSC.KEYS.requests);
+    if (user && user.email) {
+      // keep existing behavior; also try to associate by customer name if possible
+    }
     const favorites = LSC.getFavorites();
     const reviews = getList(LSC.KEYS.reviews);
 
     const active = requests.filter((entry) => ACTIVE_STATUSES.indexOf(entry.status) !== -1);
     const completed = requests.filter((entry) => entry.status === "Completed");
     const upcoming = requests
-      .filter((entry) => ACTIVE_STATUSES.indexOf(entry.status) !== -1 && entry.date >= LSC.todayIso())
+      .filter((entry) => ACTIVE_STATUSES.indexOf(entry.status) !== -1 && entry.date && entry.date >= LSC.todayIso())
       .sort((a, b) => a.date.localeCompare(b.date));
 
     statsHost.innerHTML =
@@ -342,11 +418,53 @@
       statCard("heart", favorites.length, "Saved providers") +
       statCard("star", reviews.length, "Reviews given");
 
+    const filterSelect = $("#customer-request-filter");
+    let filter = "All";
+    if (filterSelect) {
+      filter = filterSelect.value || "All";
+    }
+    let filteredRequests = requests.slice();
+    if (filter !== "All") {
+      filteredRequests = filteredRequests.filter((entry) => entry.status === filter);
+    }
+    filteredRequests.sort((a, b) => String(b.createdAt || b.updatedAt || 0).localeCompare(String(a.createdAt || a.updatedAt || 0)));
+
+    const requestsListHost = $("#customer-requests-list");
+    const requestsEmptyHost = $("#customer-requests-empty");
+    const counter = $("#requests-count");
+    if (counter) counter.textContent = requests.length + " total";
+
+    if (requestsListHost) {
+      if (!filteredRequests.length) {
+        requestsListHost.innerHTML = "";
+        if (requestsEmptyHost) {
+          requestsEmptyHost.classList.remove("hidden");
+          requestsEmptyHost.innerHTML = LSC.emptyStateHtml({
+            icon: "inbox",
+            title: "No requests found",
+            text: filter === "All"
+              ? "Find a professional and send your first request — it will show up here instantly."
+              : "No requests match the selected filter.",
+            actionHref: filter === "All" ? "services.html" : null,
+            actionLabel: filter === "All" ? "Browse services" : undefined
+          });
+        }
+      } else {
+        if (requestsEmptyHost) {
+          requestsEmptyHost.classList.add("hidden");
+          requestsEmptyHost.innerHTML = "";
+        }
+        requestsListHost.innerHTML = filteredRequests
+          .map((entry) => requestRowHtml(entry, { showProfile: true, showTimeline: true, showDetails: true }))
+          .join("");
+      }
+    }
+
     const recentHost = $("#recent-requests");
     if (recentHost) {
       const recent = requests
         .slice()
-        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+        .sort((a, b) => String(b.createdAt || 0).localeCompare(String(a.createdAt || 0)))
         .slice(0, 6);
 
       recentHost.innerHTML = recent.length
@@ -358,9 +476,6 @@
             actionHref: "services.html",
             actionLabel: "Browse services"
           });
-
-      const counter = $("#requests-count");
-      if (counter) counter.textContent = requests.length + " total";
     }
 
     const upcomingHost = $("#upcoming-requests");
@@ -370,7 +485,7 @@
         : LSC.emptyStateHtml({
             icon: "calendar-x",
             title: "Nothing scheduled",
-            text: "Confirmed and pending requests with a future date appear here."
+            text: "Pending or accepted requests with a future date appear here."
           });
     }
 
@@ -481,7 +596,45 @@
       welcome.textContent = "Welcome back" + (user ? ", " + String(user.name).split(" ")[0] : "") + "!";
     }
 
-    const queue = getList(LSC.KEYS.providerRequests);
+    let queue = getList(LSC.KEYS.providerRequests);
+    // Also merge in customer requests that are linked to this provider for completeness
+    const customerRequests = getList(LSC.KEYS.requests);
+    const mergedMap = {};
+    queue.forEach((entry) => {
+      mergedMap[entry.id] = Object.assign({}, entry);
+    });
+    customerRequests.forEach((entry) => {
+      if (Number(entry.providerId) === Number(DEMO_PROVIDER_ID)) {
+        if (!mergedMap[entry.id]) {
+          mergedMap[entry.id] = {
+            id: entry.id,
+            customer: entry.customer || entry.customerName || "Customer",
+            customerId: entry.customerId,
+            service: entry.service,
+            date: entry.date,
+            time: entry.time,
+            amount: entry.price || entry.amount,
+            status: entry.status,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
+            providerId: entry.providerId,
+            phone: entry.phone,
+            description: entry.description
+          };
+        } else {
+          // sync status/details
+          mergedMap[entry.id].status = entry.status || mergedMap[entry.id].status;
+          mergedMap[entry.id].service = entry.service || mergedMap[entry.id].service;
+          mergedMap[entry.id].date = entry.date || mergedMap[entry.id].date;
+          mergedMap[entry.id].time = entry.time || mergedMap[entry.id].time;
+          mergedMap[entry.id].amount = entry.price || mergedMap[entry.id].amount || mergedMap[entry.id].amount;
+          mergedMap[entry.id].customer = entry.customer || mergedMap[entry.id].customer;
+          mergedMap[entry.id].providerId = entry.providerId || mergedMap[entry.id].providerId;
+        }
+      }
+    });
+    queue = Object.values(mergedMap);
+
     const completed = queue.filter((entry) => entry.status === "Completed");
     const earnings = completed.reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
 
@@ -502,7 +655,7 @@
     const host = $("#status-filter");
     if (!host) return;
 
-    const statuses = ["All", "Pending", "Accepted", "Completed", "Rejected"];
+    const statuses = ["All", "Pending", "Accepted", "In Progress", "Completed", "Cancelled"];
     host.innerHTML = statuses
       .map((status) => {
         const active = status === providerStatusFilter;
@@ -561,9 +714,11 @@
 
     body.innerHTML = filtered
       .map((entry) => {
-        const pending = entry.status === "Pending";
-        const accepted = entry.status === "Accepted";
-        const closed = ["Completed", "Rejected", "Cancelled"].indexOf(entry.status) !== -1;
+        const status = LSC.normalizeStatus ? LSC.normalizeStatus(entry.status) : entry.status;
+        const pending = status === "Pending";
+        const accepted = status === "Accepted";
+        const inProgress = status === "In Progress";
+        const closed = ["Completed", "Cancelled"].indexOf(status) !== -1;
 
         let actions = '<span class="text-xs font-medium text-slate-400">No actions</span>';
         if (pending) {
@@ -571,17 +726,25 @@
             '<button type="button" class="lsc-btn lsc-btn--soft lsc-btn--sm" data-action="accept-request" data-id="' +
             LSC.escapeHtml(entry.id) +
             '">Accept</button>' +
-            '<button type="button" class="lsc-btn lsc-btn--danger lsc-btn--sm" data-action="reject-request" data-id="' +
+            '<button type="button" class="lsc-btn lsc-btn--danger lsc-btn--sm" data-action="cancel-request-provider" data-id="' +
             LSC.escapeHtml(entry.id) +
-            '">Reject</button>';
+            '">Cancel</button>';
         } else if (accepted) {
+          actions =
+            '<button type="button" class="lsc-btn lsc-btn--primary lsc-btn--sm" data-action="start-progress-request" data-id="' +
+            LSC.escapeHtml(entry.id) +
+            '">Start Progress</button>' +
+            '<button type="button" class="lsc-btn lsc-btn--danger lsc-btn--sm" data-action="cancel-request-provider" data-id="' +
+            LSC.escapeHtml(entry.id) +
+            '">Cancel</button>';
+        } else if (inProgress) {
           actions =
             '<button type="button" class="lsc-btn lsc-btn--primary lsc-btn--sm" data-action="complete-request" data-id="' +
             LSC.escapeHtml(entry.id) +
-            '">Complete</button>' +
-            '<button type="button" class="lsc-btn lsc-btn--danger lsc-btn--sm" data-action="reject-request" data-id="' +
+            '">Mark Completed</button>' +
+            '<button type="button" class="lsc-btn lsc-btn--danger lsc-btn--sm" data-action="cancel-request-provider" data-id="' +
             LSC.escapeHtml(entry.id) +
-            '">Reject</button>';
+            '">Cancel</button>';
         } else if (closed) {
           actions = '<span class="text-xs font-medium text-slate-400">Closed</span>';
         }
@@ -591,22 +754,25 @@
           '<td><div class="flex items-center gap-2.5">' +
           initialsAvatar(entry.customer) +
           '<span class="whitespace-nowrap font-medium text-slate-800">' +
-          LSC.escapeHtml(entry.customer) +
-          "</span></div></td>" +
+          LSC.escapeHtml(entry.customer || "Customer") +
+          "</span></div>" +
+          (entry.phone ? '<p class="mt-1 text-[11px] text-slate-500">' + LSC.escapeHtml(entry.phone) + "</p>" : "") +
+          "</td>" +
           '<td><p class="font-medium text-slate-800">' +
-          LSC.escapeHtml(entry.service) +
+          LSC.escapeHtml(entry.service || "Service") +
           "</p>" +
           '<p class="text-xs text-slate-500">' +
           LSC.escapeHtml(entry.id) +
           " · " +
           LSC.formatPrice(entry.amount || 0) +
           (entry.time ? " · " + LSC.escapeHtml(entry.time) : "") +
+          (entry.description ? '<br/><span class="line-clamp-2">' + LSC.escapeHtml(entry.description) + "</span>" : "") +
           "</p></td>" +
           '<td class="whitespace-nowrap">' +
           formatDate(entry.date) +
           "</td>" +
           "<td>" +
-          statusBadge(entry.status) +
+          statusBadge(status) +
           "</td>" +
           '<td><div class="flex flex-wrap gap-2">' +
           actions +
@@ -652,7 +818,7 @@
     const host = $("#status-breakdown");
     if (!host) return;
 
-    const statuses = ["Pending", "Accepted", "Completed", "Rejected"];
+    const statuses = ["Pending", "Accepted", "In Progress", "Completed", "Cancelled"];
     const total = queue.length || 1;
 
     host.innerHTML = statuses
@@ -662,8 +828,10 @@
         const color =
           status === "Completed"
             ? "bg-emerald-500"
-            : status === "Rejected"
+            : status === "Cancelled"
             ? "bg-rose-500"
+            : status === "In Progress"
+            ? "bg-sky-500"
             : status === "Accepted"
             ? "bg-brand-500"
             : "bg-amber-500";
@@ -693,20 +861,51 @@
      ---------------------------------------------------------- */
 
   function updateStatus(id, nextStatus) {
+    const normalizedNext = LSC.normalizeStatus ? LSC.normalizeStatus(nextStatus) : nextStatus;
     const queue = getList(LSC.KEYS.providerRequests);
     const entry = queue.find((item) => item.id === id);
-    if (!entry) return false;
+    if (!entry) {
+      // try to create/update from customer requests if exists
+      const customerRequests = getList(LSC.KEYS.requests);
+      const linkedCustomer = customerRequests.find((item) => item.id === id);
+      if (linkedCustomer && Number(linkedCustomer.providerId) !== Number(DEMO_PROVIDER_ID)) {
+        // prevent modifying other providers' requests
+        return false;
+      }
+    } else {
+      if (entry.providerId && Number(entry.providerId) !== Number(DEMO_PROVIDER_ID)) {
+        return false;
+      }
+    }
 
-    entry.status = nextStatus;
-    entry.updatedAt = new Date().toISOString();
-    LSC.store.set(LSC.KEYS.providerRequests, queue);
-
+    // validate transition if coming from existing state
     const customerRequests = getList(LSC.KEYS.requests);
-    const linked = customerRequests.find((item) => item.id === id);
-    if (linked) {
-      linked.status = nextStatus;
-      linked.updatedAt = entry.updatedAt;
+    const linkedCustomer = customerRequests.find((item) => item.id === id);
+    const currentStatus = entry ? entry.status : (linkedCustomer ? linkedCustomer.status : null);
+    if (LSC.isValidStatusTransition && currentStatus && !LSC.isValidStatusTransition(currentStatus, normalizedNext)) {
+      LSC.toast("Invalid status transition.", "error");
+      return false;
+    }
+
+    if (entry) {
+      entry.status = normalizedNext;
+      entry.updatedAt = new Date().toISOString();
+      LSC.store.set(LSC.KEYS.providerRequests, queue);
+    }
+
+    if (linkedCustomer) {
+      if (Number(linkedCustomer.providerId) !== Number(DEMO_PROVIDER_ID)) {
+        LSC.toast("You cannot update requests belonging to other providers.", "error");
+        return false;
+      }
+      linkedCustomer.status = normalizedNext;
+      linkedCustomer.updatedAt = new Date().toISOString();
       LSC.store.set(LSC.KEYS.requests, customerRequests);
+    }
+
+    // if only in provider queue
+    if (entry && !linkedCustomer) {
+      LSC.store.set(LSC.KEYS.providerRequests, queue);
     }
     return true;
   }
@@ -715,6 +914,10 @@
     const requests = getList(LSC.KEYS.requests);
     const entry = requests.find((item) => item.id === id);
     if (!entry) return false;
+    if (LSC.canCustomerCancel && !LSC.canCustomerCancel(entry.status)) {
+      LSC.toast("Only pending requests can be cancelled.", "error");
+      return false;
+    }
 
     entry.status = "Cancelled";
     entry.updatedAt = new Date().toISOString();
@@ -730,6 +933,35 @@
     return true;
   }
 
+  function cancelRequestAsProvider(id) {
+    const normalizedNext = "Cancelled";
+    const customerRequests = getList(LSC.KEYS.requests);
+    const linkedCustomer = customerRequests.find((item) => item.id === id);
+    if (linkedCustomer && Number(linkedCustomer.providerId) !== Number(DEMO_PROVIDER_ID)) {
+      LSC.toast("You cannot update requests belonging to other providers.", "error");
+      return false;
+    }
+
+    const queue = getList(LSC.KEYS.providerRequests);
+    const entry = queue.find((item) => item.id === id);
+    if (entry && entry.providerId && Number(entry.providerId) !== Number(DEMO_PROVIDER_ID)) {
+      LSC.toast("You cannot update requests belonging to other providers.", "error");
+      return false;
+    }
+
+    if (linkedCustomer) {
+      linkedCustomer.status = normalizedNext;
+      linkedCustomer.updatedAt = new Date().toISOString();
+      LSC.store.set(LSC.KEYS.requests, customerRequests);
+    }
+    if (entry) {
+      entry.status = normalizedNext;
+      entry.updatedAt = new Date().toISOString();
+      LSC.store.set(LSC.KEYS.providerRequests, queue);
+    }
+    return true;
+  }
+
   function handleActionClick(event) {
     const trigger = event.target.closest("[data-action]");
     if (!trigger) return;
@@ -738,16 +970,27 @@
 
     if (action === "accept-request") {
       if (updateStatus(id, "Accepted")) {
-        LSC.toast("Request " + id + " accepted. The customer has been notified (demo).", "success");
+        LSC.toast("Request " + id + " accepted.", "success");
         renderProviderDashboard();
+        renderCustomerDashboard();
+      }
+      return;
+    }
+
+    if (action === "start-progress-request") {
+      if (updateStatus(id, "In Progress")) {
+        LSC.toast("Request " + id + " marked as In Progress.", "success");
+        renderProviderDashboard();
+        renderCustomerDashboard();
       }
       return;
     }
 
     if (action === "reject-request") {
-      if (updateStatus(id, "Rejected")) {
-        LSC.toast("Request " + id + " rejected.", "info");
+      if (updateStatus(id, "Cancelled")) {
+        LSC.toast("Request " + id + " cancelled.", "info");
         renderProviderDashboard();
+        renderCustomerDashboard();
       }
       return;
     }
@@ -756,15 +999,53 @@
       if (updateStatus(id, "Completed")) {
         LSC.toast("Nice work! Request " + id + " marked as completed.", "success");
         renderProviderDashboard();
+        renderCustomerDashboard();
+      }
+      return;
+    }
+
+    if (action === "cancel-request-provider") {
+      const confirmed = window.confirm("Cancel this request? This action cannot be undone.");
+      if (!confirmed) return;
+      if (cancelRequestAsProvider(id)) {
+        LSC.toast("Request " + id + " cancelled.", "info");
+        renderProviderDashboard();
+        renderCustomerDashboard();
       }
       return;
     }
 
     if (action === "cancel-request") {
+      const confirmed = window.confirm("Cancel this pending request?");
+      if (!confirmed) return;
       if (cancelRequest(id)) {
         LSC.toast("Request " + id + " cancelled.", "info");
         renderCustomerDashboard();
       }
+      return;
+    }
+
+    if (action === "view-request-details") {
+      const requests = getList(LSC.KEYS.requests);
+      const entry = requests.find((item) => item.id === id);
+      if (!entry) {
+        LSC.toast("Request details not found.", "error");
+        return;
+      }
+      const provider = LSC.getProvider ? LSC.getProvider(entry.providerId) : null;
+      const status = LSC.normalizeStatus ? LSC.normalizeStatus(entry.status) : entry.status;
+      const details = [
+        "Request ID: " + entry.id,
+        "Service: " + (entry.service || "-"),
+        "Provider: " + (entry.providerName || (provider ? provider.name : "-")),
+        "Status: " + status,
+        "Date: " + (entry.date || "-") + (entry.time ? " " + entry.time : ""),
+        "Price: " + LSC.formatPrice(entry.price || entry.amount || 0),
+        "Phone: " + (entry.phone || "-"),
+        "Description: " + (entry.description || "-"),
+        "Created: " + (entry.createdAt ? formatDate(entry.createdAt.split("T")[0]) : "-")
+      ].join("\n");
+      window.alert(details);
       return;
     }
 
@@ -797,6 +1078,13 @@
 
     if ($("#dash-stats")) renderCustomerDashboard();
     if ($("#provider-stats")) renderProviderDashboard();
+
+    const customerFilter = $("#customer-request-filter");
+    if (customerFilter) {
+      customerFilter.addEventListener("change", () => {
+        if ($("#dash-stats")) renderCustomerDashboard();
+      });
+    }
 
     document.addEventListener("click", (event) => {
       handleActionClick(event);

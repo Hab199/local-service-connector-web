@@ -553,12 +553,13 @@
       if (!valid) return;
 
       const submit = form.querySelector('button[type="submit"]');
+      if (submit && submit.disabled) return;
       LSC.setButtonLoading(submit, "Sending request");
 
       window.setTimeout(() => {
         const user = LSC.getUser();
         const selectedService = provider.services.find((entry) => entry.name === service);
-        const requestId = "REQ-" + Date.now().toString(36).toUpperCase();
+        const requestId = (LSC.generateRequestId ? LSC.generateRequestId() : "REQ-" + Date.now().toString(36).toUpperCase());
 
         const request = {
           id: requestId,
@@ -574,8 +575,10 @@
           description: description,
           phone: phone,
           customer: user ? user.name : "Guest Customer",
+          customerId: user && user.email ? user.email : undefined,
           status: "Pending",
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           demo: true
         };
 
@@ -589,13 +592,18 @@
         const queue = Array.isArray(queueSaved) ? queueSaved : [];
         queue.unshift({
           id: requestId,
+          providerId: provider.id,
           customer: request.customer,
+          customerId: request.customerId,
           service: service,
           date: date,
           time: time,
           amount: request.price,
+          phone: phone,
+          description: description,
           status: "Pending",
-          createdAt: request.createdAt
+          createdAt: request.createdAt,
+          updatedAt: request.updatedAt
         });
         LSC.store.set(queueKey, queue);
 
